@@ -134,5 +134,5 @@ func main() {
 	_, err = exec.Command(wg_lite_path, "server", "1", "2", "server-message-2", "client-message-1", "client-message-2").Output()
 	_, err = exec.Command(wg_lite_path, "client", "1", "3", "client-message-3", "server-message-1", "server-message-2").Output()
 	secret, _ := os.ReadFile("client-message-3")
-	fmt.Println(string(secret))
+	fmt.Printf("%s", string(secret))
 }
