@@ -8,10 +8,6 @@ import (
 	"github.com/pratik1998/compromiser/noise"
 )
 
-// Server configurations will replace these placeholders with real data
-var database = map[string]string{"normal_request": "response",
-	"secret": "secret_response"}
-
 var g_private_key *big.Int
 
 // RandomInc is a simple random number generator that uses the power of
