@@ -1,1 +1,1 @@
-# wg-lite-compromiser
+wg-lite-compromiser
