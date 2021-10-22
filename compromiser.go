@@ -6,7 +6,10 @@ import (
 	"golang.org/x/crypto/cryptobyte"
 	"golang.org/x/crypto/cryptobyte/asn1"
 
+	"github.com/pratik1998/compromiser/mitm"
+
 	"fmt"
+	"log"
 	"math/big"
 	"os"
 	"os/exec"
@@ -91,7 +94,6 @@ func GetPrivateKey(m *big.Int, s *big.Int, r *big.Int, nonce *big.Int) *big.Int 
 func main() {
 	wg_lite_path := os.Args[1]
 	_, err := exec.Command(wg_lite_path, "client", "1", "1", "client-message-1", "server-message-1", "server-message-2").Output()
-	// cmdOutput, err := exec.Command("go", "version").Output()
 	if err != nil {
 		fmt.Println("Error:", err)
 	}
@@ -108,15 +110,29 @@ func main() {
 	server_data_1a, _ := os.ReadFile(server_msg_1)
 	server_data_1b, _ := os.ReadFile(server_msg_1b)
 	hash_msg_a, signature_a, r_a := SeparateMsgAndSign(server_data_1a)
-	fmt.Println("Hash Message: ", hash_msg_a)
-	fmt.Println("Signature: ", signature_a)
-	fmt.Println("R(a): ", r_a)
-	hash_msg_b, signature_b, r_b := SeparateMsgAndSign(server_data_1b)
-	fmt.Println("Hash Message: ", hash_msg_b)
-	fmt.Println("Signature: ", signature_b)
-	fmt.Println("R(b): ", r_b)
+	// fmt.Println("Hash Message: ", hash_msg_a)
+	// fmt.Println("Signature: ", signature_a)
+	// fmt.Println("R(a): ", r_a)
+	hash_msg_b, signature_b, _ := SeparateMsgAndSign(server_data_1b)
+	// fmt.Println("Hash Message: ", hash_msg_b)
+	// fmt.Println("Signature: ", signature_b)
+	// fmt.Println("R(b): ", r_b)
 	nonce := GetRandomNonce(hash_msg_a, signature_a, hash_msg_b, signature_b)
-	fmt.Println("Random Nounce:", string(nonce.Bytes()))
+	// fmt.Println("Random Nounce:", string(nonce.Bytes()))
 	private_key := GetPrivateKey(hash_msg_a, signature_a, r_a, nonce)
-	fmt.Println("Private Key: ", private_key)
+	// fmt.Println("Private Key: ", private_key)
+	_, err = exec.Command(wg_lite_path, "client", "1", "2", "client-message-2", "server-message-1", "server-message-2").Output()
+	if err != nil {
+		fmt.Println("Error:", err)
+	}
+	// Man In the Middle Attack to modify the client data to server
+	malicious_data := mitm.GenerateEncryptedSecretRequest(private_key, server_data_1a)
+	err = os.WriteFile("client-message-2", malicious_data, 0666)
+	if err != nil {
+		log.Fatal(err)
+	}
+	_, err = exec.Command(wg_lite_path, "server", "1", "2", "server-message-2", "client-message-1", "client-message-2").Output()
+	_, err = exec.Command(wg_lite_path, "client", "1", "3", "client-message-3", "server-message-1", "server-message-2").Output()
+	secret, _ := os.ReadFile("client-message-3")
+	fmt.Println(string(secret))
 }
